@@ -11,6 +11,8 @@
   <author>Eddy Verbruggen</author>
 
   <license>MIT</license>
+  
+  <preference name="REVERSED_CLIENT_ID"/>
 
   <keywords>Google, Google+, GooglePlus, Google Plus, Google Login, Login, OAuth</keywords>
 
@@ -64,7 +66,7 @@
     <header-file src="src/ios/GooglePlus.h"/>
     <source-file src="src/ios/GooglePlus.m"/>
 
-    <preference name="REVERSED_CLIENT_ID"/>
+    
     <config-file target="*-Info.plist" parent="CFBundleURLTypes">
       <array>
         <dict>
