@@ -246,7 +246,7 @@ didSignInForUser:(GIDGoogleUser *)user
         NSDictionary *result = @{
                        @"email"       : email,
                        @"idToken"     : token,
-                       @"oauthToken"  : serverAuthCode,
+                       @"oauthToken"  : accessToken,
                        @"accessToken" : accessToken,
                        @"userId"      : userId,
                        @"displayName" : user.profile.name ?: [NSNull null]/*,
