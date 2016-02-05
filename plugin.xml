@@ -2,7 +2,7 @@
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
         xmlns:android="http://schemas.android.com/apk/res/android"
         id="cordova-plugin-googleplus"
-        version="4.0.1">
+        version="4.0.8">
 
   <name>Google+</name>
 
@@ -11,8 +11,6 @@
   <author>Eddy Verbruggen</author>
 
   <license>MIT</license>
-  
-  <preference name="REVERSED_CLIENT_ID"/>
 
   <keywords>Google, Google+, GooglePlus, Google Plus, Google Login, Login, OAuth</keywords>
 
@@ -31,10 +29,8 @@
   <!-- android -->
   <platform name="android">
 
-    <!-- these give a lot of peeps trouble, esp on build.phonegap.com, so not using them -->
     <framework src="com.google.android.gms:play-services-plus:+" />
     <framework src="com.google.android.gms:play-services-identity:+" />
-    <!--<dependency id="cordova-plugin-googleplayservices" />-->
 
     <config-file target="res/xml/config.xml" parent="/*">
       <feature name="GooglePlus">
@@ -66,7 +62,8 @@
     <header-file src="src/ios/GooglePlus.h"/>
     <source-file src="src/ios/GooglePlus.m"/>
 
-    
+    <preference name="REVERSED_CLIENT_ID"/>
+
     <config-file target="*-Info.plist" parent="CFBundleURLTypes">
       <array>
         <dict>
@@ -92,20 +89,31 @@
       </array>
     </config-file>
 
-    <!-- Google+ framework -->
-<!--    <framework src="src/ios/libs/GooglePlus.framework" custom="true" />-->
+    <!-- iOS9 whitelisting -->
+    <config-file target="*-Info.plist" parent="LSApplicationQueriesSchemes">
+      <array>
+        <string>$PACKAGE_NAME</string>
+        <string>$REVERSED_CLIENT_ID</string>
+        <string>com-google-gidconsent</string>
+        <string>com-google-gidconsent-google</string>
+        <string>com.google.gppconsent.2.4.0</string>
+        <string>com.google.gppconsent.2.4.1</string>
+      </array>
+    </config-file>
+
+    <!-- Google frameworks -->
     <framework src="src/ios/libs/GoogleOpenSource.framework" custom="true" />
+    <!-- Downloaded here: https://developers.google.com/identity/sign-in/ios/sdk/ -->
     <framework src="src/ios/libs/GoogleSignIn.framework" custom="true" />
 
     <!-- System frameworks -->
     <framework src="AddressBook.framework" weak="true" />
-    <framework src="CoreMotion.framework" weak="true" />
     <framework src="CoreText.framework" weak="true" />
-    <framework src="CoreLocation.framework" weak="true" />
-    <framework src="MediaPlayer.framework" weak="true" />
     <framework src="Security.framework" weak="true" />
     <framework src="StoreKit.framework" weak="true" />
     <framework src="SystemConfiguration.framework" weak="true" />
+    <framework src="libz.tbd" weak="true" />
+    <framework src="libz.dylib" weak="true" />
 
   </platform>
 

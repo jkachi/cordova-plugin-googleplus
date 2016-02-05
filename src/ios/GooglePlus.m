@@ -1,6 +1,6 @@
-#import <GoogleOpenSource/GoogleOpenSource.h>
+//#import <GoogleOpenSource/GoogleOpenSource.h>
 #import "AppDelegate.h"
-//#import "objc/runtime.h"
+#import "objc/runtime.h"
 #import "GooglePlus.h"
 
 // need to swap out a method, so swizzling it here
@@ -55,9 +55,10 @@ static void swizzleMethod(Class class, SEL destinationSelector, SEL sourceSelect
 
 // If this returns false, you better not call the login function because of likely app rejection by Apple,
 // see https://code.google.com/p/google-plus-platform/issues/detail?id=900
+// Update: should be fine since we use the GoogleSignIn framework instead of the GooglePlus framework
 - (void) isAvailable:(CDVInvokedUrlCommand*)command {
-  BOOL appInstalled = [[UIApplication sharedApplication] canOpenURL: [NSURL URLWithString:@"gplus://"]];
-  CDVPluginResult * pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:appInstalled];
+//  BOOL appInstalled = [[UIApplication sharedApplication] canOpenURL: [NSURL URLWithString:@"gplus://"]];
+  CDVPluginResult * pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:YES];
   [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
@@ -127,9 +128,15 @@ static void swizzleMethod(Class class, SEL destinationSelector, SEL sourceSelect
     NSString *clientId = [self reverseUrlScheme:reversedClientId];
   
     NSString* scopesString = [options objectForKey:@"scopes"];
-  
+    NSString* serverClientId = [options objectForKey:@"webApiKey"];
+
     GIDSignIn *signIn = [GIDSignIn sharedInstance];
     signIn.clientID = clientId;
+
+    if (serverClientId != nil) {
+      signIn.serverClientID = serverClientId;
+    }
+
     signIn.allowsSignInWithBrowser = NO; // Otherwise your app get rejected
     signIn.uiDelegate = self;
     signIn.delegate = self;
@@ -139,6 +146,8 @@ static void swizzleMethod(Class class, SEL destinationSelector, SEL sourceSelect
         NSArray* scopes = [scopesString componentsSeparatedByString:@" "];
         [signIn setScopes:scopes];
     }
+    [signIn setAllowsSignInWithBrowser:NO]; // disabling as this may be a rejection reason for Apple
+    [signIn setAllowsSignInWithWebView:YES]; // assuming this should be fine
     return signIn;
 }
 
@@ -230,9 +239,7 @@ static void swizzleMethod(Class class, SEL destinationSelector, SEL sourceSelect
 /** Google Sign-In SDK
  @date July 19, 2015
  */
-- (void)signIn:(GIDSignIn *)signIn
-didSignInForUser:(GIDGoogleUser *)user
-     withError:(NSError *)error {
+- (void)signIn:(GIDSignIn *)signIn didSignInForUser:(GIDGoogleUser *)user withError:(NSError *)error {
     if (error) {
         CDVPluginResult * pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:error.localizedDescription];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:_callbackId];
@@ -240,18 +247,22 @@ didSignInForUser:(GIDGoogleUser *)user
         NSString *email = user.profile.email;
         NSString *token = user.authentication.idToken;
         NSString *accessToken = user.authentication.accessToken;
+        NSString *refreshToken = user.authentication.refreshToken;
         NSString *userId = user.userID;
         NSString *serverAuthCode = user.serverAuthCode != nil ? user.serverAuthCode : @"";
 //        GTLPlusPerson *person = [GPPSignIn sharedInstance].googlePlusUser;
+        NSURL *imageUrl = [user.profile imageURLWithDimension:120]; // TODO pass in img size as param, and try to sync with Android
         NSDictionary *result = @{
                        @"email"       : email,
                        @"idToken"     : token,
                        @"oauthToken"  : accessToken,
                        @"accessToken" : accessToken,
+                       @"refreshToken": refreshToken,
                        @"userId"      : userId,
-                       @"displayName" : user.profile.name ?: [NSNull null]/*,
+                       @"displayName" : user.profile.name ? : [NSNull null],
+                       @"imageUrl"    : imageUrl ? imageUrl.absoluteString : [NSNull null],
+                       /*,
                        @"gender"      : person.gender ?: [NSNull null],
-                       @"imageUrl"    : (person.image != nil && person.image.url != nil) ? person.image.url : [NSNull null],
                        @"givenName"   : (person.name != nil && person.name.givenName != nil) ? person.name.givenName : [NSNull null],
                        @"middleName"  : (person.name != nil && person.name.middleName != nil) ? person.name.middleName : [NSNull null],
                        @"familyName"  : (person.name != nil && person.name.familyName != nil) ? person.name.familyName : [NSNull null],
@@ -268,16 +279,14 @@ didSignInForUser:(GIDGoogleUser *)user
 /** Google Sign-In SDK
  @date July 19, 2015
  */
-- (void)signIn:(GIDSignIn *)signIn
-presentViewController:(UIViewController *)viewController {
+- (void)signIn:(GIDSignIn *)signIn presentViewController:(UIViewController *)viewController {
     [self.viewController presentViewController:viewController animated:YES completion:nil];
 }
 
 /** Google Sign-In SDK
  @date July 19, 2015
  */
-- (void)signIn:(GIDSignIn *)signIn
-dismissViewController:(UIViewController *)viewController {
+- (void)signIn:(GIDSignIn *)signIn dismissViewController:(UIViewController *)viewController {
     [self.viewController dismissViewControllerAnimated:YES completion:nil];
 }
 
